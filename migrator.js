@@ -1,10 +1,7 @@
 const axios = require("axios");
-const request = require("request");
-
-const HESTIA_URL = "https://web-hestia-b5h7fuyqbq-as.a.run.app/wp-json/wp/v2/";
 
 const api = axios.create({
-  baseURL: "https://demeter-staging-dot-sayakaya.et.r.appspot.com/api",
+  baseURL: "https://demeter-main-dot-sayakaya.et.r.appspot.com/api",
   headers: { Authorization: "Bearer " + process.env.STRAPI_TOKEN },
 });
 
@@ -12,34 +9,52 @@ const sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-const postMigrator = async (gs_url, post) => {
-  request({ url: gs_url, encoding: null }, async (error, response, body) => {
-    const blob = new Blob([body], { type: "image/jpeg" });
+const getThumbnailImage = async (url) => {
+  try {
+    const response = await axios.get(url, {
+      responseType: "arraybuffer",
+    });
+
+    const blob = new Blob([response.data], { type: "image/jpeg" });
 
     const formData = new FormData();
     formData.append("files", blob);
 
     const res = await api.post("/upload", formData);
 
-    const postRes = { ...post, thumbnail: res.data[0].id };
+    console.log(`migrate image for id: ${res.data[0].id}}`);
 
-    await api.post("/posts", { data: postRes });
-    console.log(`migrating ${postRes.title}`);
-  });
-};
-
-const tagMigrator = async (tags) => {
-  tags.forEach(async (tag) => {
-    await api.post("/tags", { data: tag });
-    console.log(`migrating ${tag.name}`);
-  });
+    return res.data[0].id;
+  } catch (error) {
+    console.error(`error migrating image for url: ${url}`);
+  }
 };
 
 const categoryMigrator = async (categories) => {
-  categories.forEach(async (category) => {
+  for (const category of categories) {
     await api.post("/categories", { data: category });
     console.log(`migrating ${category.name}`);
-  });
+    await sleep(1000);
+  }
 };
 
-module.exports = { postMigrator, tagMigrator, categoryMigrator, sleep };
+const postMigrator = async (post) => {
+  await api.post("/posts", { data: post });
+  console.log(`migrating ${post.title}`);
+};
+
+const tagMigrator = async (tags) => {
+  for (const tag of tags) {
+    await api.post("/tags", { data: tag });
+    console.log(`migrating ${tag.name}`);
+    await sleep(1000);
+  }
+};
+
+module.exports = {
+  tagMigrator,
+  getThumbnailImage,
+  sleep,
+  postMigrator,
+  categoryMigrator,
+};
