@@ -7,6 +7,7 @@ const {
   postMigrator,
   categoryMigrator,
 } = require("./migrator");
+const slug = require("slug")
 
 const HESTIA_URL = "https://web-hestia-b5h7fuyqbq-as.a.run.app/wp-json/wp/v2/";
 const turndownService = new TurndownService();
@@ -62,6 +63,7 @@ const getPostsData = async () => {
       thumbnail: await getThumbnailImage(
         post._embedded["wp:featuredmedia"][0].source_url
       ),
+      slug: slug(post.slug)
     };
     await postMigrator(postMapped);
     await sleep(1500);

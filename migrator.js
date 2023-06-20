@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const api = axios.create({
-  baseURL: "https://demeter-main-dot-sayakaya.et.r.appspot.com/api",
+  baseURL: "https://demeter-staging-dot-sayakaya.et.r.appspot.com/api",
   headers: { Authorization: "Bearer " + process.env.STRAPI_TOKEN },
 });
 
